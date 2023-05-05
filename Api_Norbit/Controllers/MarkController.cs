@@ -16,11 +16,74 @@ namespace Api_Norbit.Controllers
     [ApiController]
     public class MarkController : ControllerBase
     {
+
+        /// <summary>
+        /// Формирует подробное сообщение с ошибками.
+        /// </summary>
+        /// <param name="id">Проверяемый id пользователя.</param>
+        /// <param name="subject">Проверяемый id предмета.</param>
+        /// <param name="mark">Проверяемая оценка.</param>
+        /// <returns>Сообщение ошибок.</returns>
+        private string MessageError(string id, string subject, string mark)
+        {
+            string message = "";
+            try
+            {
+                int checkID = int.Parse(id);
+            }
+            catch
+            {
+                message += "Введёный вами id имел не верный формат. Верным форматом является число(integer)";
+            }
+
+            try
+            {
+                int checkSubject = int.Parse(subject);
+            }
+            catch
+            {
+                message += "Введёный вами id предмета имел не верный формат. Верным форматом является число(integer)";
+            }
+
+            try
+            {
+                int checkMark = int.Parse(mark);
+            }
+            catch
+            {
+                message += "Введёная вами оценка имела не верный формат. Верным форматом является число(integer)";
+            }
+
+            return message;
+        }
+
+        /// <summary>
+        /// Формирует подробное сообщение с ошибками.
+        /// </summary>
+        /// <param name="integer">Проверяемое число.</param>
+        /// <returns>Сообщение ошибок.</returns>
+        private string MessageError(string integer)
+        {
+            string message = "";
+            try
+            {
+                int checkID = int.Parse(integer);
+            }
+            catch
+            {
+                message += "Введёный вами id имел не верный формат. Верным форматом является число(integer)";
+            }
+
+            return message;
+        }
+
+
+
         /// <summary>
         /// Считывает все оценки указанного пользователя.
         /// </summary>
         /// <param name="userId">id пользователя, у которого надо найти оценки.</param>
-        /// <returns></returns>
+        /// <returns>Список оценок.</returns>
         private List<User_markModel> ReadMarkFromDB(int userId)
         {
             List<User_markModel> marks = new List<User_markModel>();
@@ -103,15 +166,19 @@ namespace Api_Norbit.Controllers
         /// <param name="userId">id ученика у которого требуется найти оценки.</param>
         /// <returns>Оценки по предметам.</returns>
         [HttpGet(Name = "GiveUserMarks")]
-        public string GetMarks(int userId)
+        public string GetMarks(string userId)
         {
+            string problem = MessageError(userId);
+            if (problem == "")
+                return problem;
 
-            List<User_markModel> dataMark = ReadMarkFromDB(userId);
+
+            List<User_markModel> dataMark = ReadMarkFromDB(int.Parse(userId));
             if (dataMark.Count() == 0)
                 return "Нет ученика с таким id. Проверьте id и попробуйте снова";
             
             Dictionary<int, string> dataSubject = ReadSubjectFromDB();
-            string dataUser = ReadUserFromDB(userId);
+            string dataUser = ReadUserFromDB(int.Parse(userId));
             List<Mark> listMarks = Replace(dataMark, dataSubject);
 
             string answer = $"Ученик: {dataUser}\n";
@@ -150,16 +217,21 @@ namespace Api_Norbit.Controllers
         /// <param name="userId">id пользователя.</param>
         /// <param name="idSubject">id предмета.</param>
         /// <param name="mark">Оценка.</param>
-        /// <returns></returns>
+        /// <returns>Статус выполнения.</returns>
         [HttpPost(Name = "AddMarksUser")]
-        public StatusCodeResult AddMarks(int userId, int idSubject, int mark)
+        public StatusCodeResult AddMarks(string userId, string idSubject, string mark)
         {
+            string problem = MessageError(userId, idSubject, mark);
             int idMark = findMaxIdMark();
+
+            if(problem == "")
+                return StatusCode(400);
+
             try
             {
                 using (DB db = new DB())
                 {
-                    User_markModel addMark = new User_markModel { id = idMark, user_id = userId, mark = mark, subject_id = idSubject};
+                    User_markModel addMark = new User_markModel { id = idMark, user_id = int.Parse(userId), mark = int.Parse(mark), subject_id = int.Parse(idSubject)};
                     db.User_mark.Add(addMark);
                     db.SaveChanges();
                 }
@@ -175,13 +247,17 @@ namespace Api_Norbit.Controllers
         /// Удаляет оценку по указанному id.
         /// </summary>
         /// <param name="idMarks">Принимает id оценки.</param>
-        /// <returns></returns>
+        /// <returns>Статус выполнения.</returns>
         [HttpDelete(Name = "DeleteMarksUser")]
-        public StatusCodeResult DeleteMarks(int idMarks)
+        public StatusCodeResult DeleteMarks(string idMarks)
         {
+            string problem = MessageError(idMarks);
+            if (problem == "")
+                return StatusCode(400);
+
             using (DB db = new DB())
             {
-                User_markModel? mark = db.User_mark.Where(d => d.id == idMarks).FirstOrDefault();
+                User_markModel? mark = db.User_mark.Where(d => d.id == int.Parse(idMarks)).FirstOrDefault();
                 if (mark != null)
                 {
                     db.User_mark.Remove(mark);

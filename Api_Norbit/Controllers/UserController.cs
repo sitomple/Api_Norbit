@@ -151,15 +151,37 @@ namespace Api_Norbit.Controllers
         }
 
 
+        /// <summary>
+        /// Формирует подробное сообщение с ошибками.
+        /// </summary>
+        /// <param name="id">Проверяет введённый id.</param>
+        /// <returns>Сформированное сообщение с ошибками.</returns>
+        private string MessageError(string id)
+        {
+            string message = "";
+
+            try
+            {
+                int check = int.Parse(id);
+            }
+            catch
+            {
+                message += "Введёный вами id имел не верный формат. Верным форматом является число(integer)";
+            }
+
+            return message;
+        }
+
+
 
         /// <summary>
         /// Добавляет в таблицу User нового пользователя.
         /// </summary>
         /// <param name="FIO">Фамилия имя отчество пользователя.</param>
         /// <param name="role">Роль пользователя.</param>
-        /// <param name="login">Логин пользователя</param>
-        /// <param name="password">Пароль пользователя</param>
-        /// <param name="grade">Класс пользователя</param>
+        /// <param name="login">Логин пользователя.</param>
+        /// <param name="password">Пароль пользователя.</param>
+        /// <param name="grade">Класс пользователя.</param>
         /// <returns>Коментарий о выполненой работе.</returns>
         [HttpPost(Name = "AddmemberUser")]
         public string AddUser(string FIO, string role, string login, string password, string grade)
@@ -189,19 +211,23 @@ namespace Api_Norbit.Controllers
         /// <param name="id">id пользователя которого нудно удалить.</param>
         /// <returns>Коментарий о выполненой работе.</returns>
         [HttpDelete(Name = "DeleteUser")]
-        public string DeleteUser(int id)
+        public string DeleteUser(string id)
         {
-            using (DB db = new DB())
+            string problem = MessageError(id);
+            if (problem != "")
             {
-                UserModel? user = db.User.Where(d => d.id == id).FirstOrDefault();
-                if (user != null)
+                using (DB db = new DB())
                 {
-                    db.User.Remove(user);
-                    db.SaveChanges();
-                    return "Пользователь успешно удалён";
+                    UserModel? user = db.User.Where(d => d.id == int.Parse(id)).FirstOrDefault();
+                    if (user != null)
+                    {
+                        db.User.Remove(user);
+                        db.SaveChanges();
+                        return "Пользователь успешно удалён";
+                    }
                 }
             }
-            return "Произошла ошибка. Проверьте введёный id";
+            return problem;
         }
     }
 }
