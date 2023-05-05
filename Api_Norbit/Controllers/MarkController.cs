@@ -23,7 +23,7 @@ namespace Api_Norbit.Controllers
         /// <param name="id">Проверяемый id пользователя.</param>
         /// <param name="subject">Проверяемый id предмета.</param>
         /// <param name="mark">Проверяемая оценка.</param>
-        /// <returns>Сообщение ошибок.</returns>
+        /// <returns>Сформированное сообщение с ошибками.</returns>
         private string MessageError(string id, string subject, string mark)
         {
             string message = "";
@@ -61,7 +61,7 @@ namespace Api_Norbit.Controllers
         /// Формирует подробное сообщение с ошибками.
         /// </summary>
         /// <param name="integer">Проверяемое число.</param>
-        /// <returns>Сообщение ошибок.</returns>
+        /// <returns>Сформированное сообщение с ошибками.</returns>
         private string MessageError(string integer)
         {
             string message = "";
