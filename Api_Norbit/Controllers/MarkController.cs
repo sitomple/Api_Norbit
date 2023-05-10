@@ -252,7 +252,7 @@ namespace Api_Norbit.Controllers
         public StatusCodeResult DeleteMarks(string idMarks)
         {
             string problem = MessageError(idMarks);
-            if (problem == "")
+            if (problem != "")
                 return StatusCode(400);
 
             using (DB db = new DB())
