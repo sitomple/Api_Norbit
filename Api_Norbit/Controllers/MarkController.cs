@@ -166,26 +166,22 @@ namespace Api_Norbit.Controllers
         /// <param name="userId">id ученика у которого требуется найти оценки.</param>
         /// <returns>Оценки по предметам.</returns>
         [HttpGet(Name = "GiveUserMarks")]
-        public string GetMarks(string userId)
+        public IActionResult GetMarks(string userId)
         {
             string problem = MessageError(userId);
-            if (problem == "")
-                return problem;
+            if (problem != "")
+                return BadRequest(problem);
 
 
             List<User_markModel> dataMark = ReadMarkFromDB(int.Parse(userId));
             if (dataMark.Count() == 0)
-                return "Нет ученика с таким id. Проверьте id и попробуйте снова";
-            
+                return BadRequest(problem);
+
             Dictionary<int, string> dataSubject = ReadSubjectFromDB();
             string dataUser = ReadUserFromDB(int.Parse(userId));
             List<Mark> listMarks = Replace(dataMark, dataSubject);
-
-            string answer = $"Ученик: {dataUser}\n";
-            foreach(var e in listMarks)
-                answer += $"Предмет: {e.subject}, Оценка: {e.mark}\n";
             
-            return answer;
+            return Ok(listMarks);
         }
 
 
@@ -193,7 +189,7 @@ namespace Api_Norbit.Controllers
         /// Ищет максимальный id среди записей в таблице User_mark.
         /// </summary>
         /// <returns>Возвращает id для оценки</returns>
-        private int findMaxIdMark()
+        private int FindMaxIdMark()
         {
             int maxId = 0;
             try
@@ -219,13 +215,13 @@ namespace Api_Norbit.Controllers
         /// <param name="mark">Оценка.</param>
         /// <returns>Статус выполнения.</returns>
         [HttpPost(Name = "AddMarksUser")]
-        public StatusCodeResult AddMarks(string userId, string idSubject, string mark)
+        public IActionResult AddMarks(string userId, string idSubject, string mark)
         {
             string problem = MessageError(userId, idSubject, mark);
-            int idMark = findMaxIdMark();
+            int idMark = FindMaxIdMark();
 
             if(problem == "")
-                return StatusCode(400);
+                return BadRequest($"{problem}");
 
             try
             {
@@ -235,11 +231,11 @@ namespace Api_Norbit.Controllers
                     db.User_mark.Add(addMark);
                     db.SaveChanges();
                 }
-                return StatusCode(200);
+                return Ok("Оценка добавлена!");
             }
             catch
             {
-                return StatusCode(400);
+                return BadRequest("Произошла непредвиденная ошибка");
             }
         }
 
@@ -249,11 +245,11 @@ namespace Api_Norbit.Controllers
         /// <param name="idMarks">Принимает id оценки.</param>
         /// <returns>Статус выполнения.</returns>
         [HttpDelete(Name = "DeleteMarksUser")]
-        public StatusCodeResult DeleteMarks(string idMarks)
+        public IActionResult DeleteMarks(string idMarks)
         {
             string problem = MessageError(idMarks);
-            if (problem != "")
-                return StatusCode(400);
+            if (problem == "")
+                return BadRequest($"{problem}");
 
             using (DB db = new DB())
             {
@@ -262,10 +258,10 @@ namespace Api_Norbit.Controllers
                 {
                     db.User_mark.Remove(mark);
                     db.SaveChanges();
-                    return StatusCode(200);
+                    return Ok("Оценка удалена!");
                 }
             }
-            return StatusCode(400);
+            return BadRequest("Произошла непредвиденная ошибка");
         }
 
         /// <summary>

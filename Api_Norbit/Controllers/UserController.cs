@@ -8,6 +8,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 
 namespace Api_Norbit.Controllers
 {
@@ -21,19 +22,14 @@ namespace Api_Norbit.Controllers
         /// </summary>
         /// <returns>Возвращает всех пользователей.</returns>
         [HttpGet(Name = "GetAllUser")]
-        public string GetAllUser()
+        public List<UserModel> GetAllUser()
         {
             string infoUsers = "";
             using (DB db = new DB())
             {
                 var users = db.User.OrderByDescending(x => x.grade).ToList();
-
-                foreach (UserModel u in users)
-                {
-                    infoUsers += $"Фамилия имя отчество:{u.FIO}; Является: {u.role}; Класс:{u.grade}\n";
-                }
+                return users;
             }
-            return infoUsers;
         }
 
 
@@ -41,7 +37,7 @@ namespace Api_Norbit.Controllers
         /// Поиск уникального id для нового пользователя.
         /// </summary>
         /// <returns>Уникальный id для пользователя.</returns>
-        private int findMaxIdUser()
+        private int FindMaxIdUser()
         {
             int maxId = 0;
             using (DB db = new DB())
@@ -50,36 +46,6 @@ namespace Api_Norbit.Controllers
             }
             return maxId + 1;
         }
-
-
-        /// <summary>
-        /// Массив ролей.
-        /// </summary>
-        private string[] CheckRole = new string[]
-        {
-            "student",
-            "teacher",
-            "director"
-        };
-
-
-        /// <summary>
-        /// Массив классов.
-        /// </summary>
-        private string[] CheckGrade = new string[]
-        {
-            "5а",
-            "5б",
-            "6а",
-            "6б",
-            "7а",
-            "7б",
-            "8а",
-            "8б",
-            "9",
-            "10",
-            "11"
-        };
 
 
 
@@ -108,44 +74,14 @@ namespace Api_Norbit.Controllers
         /// <summary>
         /// Формирует подробное сообщение с ошибками.
         /// </summary>
-        /// <param name="role">Получаемая роль на проверку.</param>
-        /// <param name="grade">Получаемый класс на проверку.</param>
         /// <param name="login">Получаемый логин на проверку.</param>
         /// <returns>Сформированное сообщение с ошибками.</returns>
-        private string MessageError(string role, string grade, string login)
+        private string MessageErrorLogin(string login)
         {
             string message = "";
 
-            int errorRole = 0;
-            for (int i = 0; i < CheckRole.Count(); i++)
-                if (CheckRole[i] != role.ToLower())
-                    errorRole++;
-
-            if (errorRole == CheckRole.Count())
-            {
-                message += "Введённой вами роли не существует. Доступны следующие роли: ";
-                foreach (var e in CheckRole)
-                    message += $"{e}, ";
-                message += "\n";
-            }
-
-            int errorGrade = 0;
-            for (int i = 0; i < CheckGrade.Count(); i++)
-                if (CheckGrade[i] != grade)
-                    errorGrade++;
-
-            if (errorGrade == CheckGrade.Count())
-            {
-                message += "Введённого вами класса не существует. Доступны следуюищие классы: ";
-                foreach (var e in CheckGrade)
-                    message += $"{e}, ";
-                message += "\n";
-            }
-
             if (CheckLogin(login))
-            {
                 message += "Введённый логин уже используется. Придумайте новый логин.";
-            }
 
             return message;
         }
@@ -173,6 +109,44 @@ namespace Api_Norbit.Controllers
         }
 
 
+        /// <summary>
+        /// Проверяет существует ли роль и класс в БД.
+        /// </summary>
+        /// <param name="role">Проверяемая роль.</param>
+        /// <param name="grade">Проверяемый класс.</param>
+        /// <returns>Булевое значение: true - если прошли проверку, false - в противном случае.</returns>
+        private bool CheckRoleAndGrade(string role, string grade)
+        {
+            bool checkRole = false;
+            bool checkGrade = false;
+
+            List<RoleModel> roles = new List<RoleModel>();
+            using (DB db = new DB())
+            {
+                roles = db.Role.ToList();
+            }
+
+            List<ClassModel> grades = new List<ClassModel>();
+            using (DB db = new DB())
+            {
+                grades = db.Grade.ToList();
+            }
+
+            foreach (var e in roles)
+                if (role == e.role)
+                    checkRole = true;
+
+            foreach (var e in grades)
+                if (grade == e.grade)
+                    checkGrade = true;
+
+            if (checkRole && checkGrade)
+                return true;
+
+            return false;
+        }
+
+
 
         /// <summary>
         /// Добавляет в таблицу User нового пользователя.
@@ -184,13 +158,14 @@ namespace Api_Norbit.Controllers
         /// <param name="grade">Класс пользователя.</param>
         /// <returns>Коментарий о выполненой работе.</returns>
         [HttpPost(Name = "AddmemberUser")]
-        public string AddUser(string FIO, string role, string login, string password, string grade)
+        public IActionResult AddUser(string FIO, string role, string login, string password, string grade)
         {
-            string errorMessage = MessageError(role, grade, login);
+            string errorMessage = MessageErrorLogin(login); 
+            bool checkRoleAndGrade = CheckRoleAndGrade(role.ToLower(), grade.ToLower());
 
-            if (errorMessage == "")
+            if (errorMessage == "" && checkRoleAndGrade)
             {
-                int newID = findMaxIdUser();
+                int newID = FindMaxIdUser();
                 HashPassword hashPassword = new HashPassword(password);
                 using (DB db = new DB())
                 {
@@ -199,9 +174,9 @@ namespace Api_Norbit.Controllers
                     db.User.Add(user);
                     db.SaveChanges();
                 }
-                return "Пользователь успешно добавлен!";
+                return Ok("Пользователь добавлен!");
             }
-            return errorMessage;
+            return BadRequest($"{errorMessage}");
         }
 
 
@@ -211,7 +186,7 @@ namespace Api_Norbit.Controllers
         /// <param name="id">id пользователя которого нудно удалить.</param>
         /// <returns>Коментарий о выполненой работе.</returns>
         [HttpDelete(Name = "DeleteUser")]
-        public string DeleteUser(string id)
+        public IActionResult DeleteUser(string id)
         {
             string problem = MessageError(id);
             if (problem != "")
@@ -223,11 +198,11 @@ namespace Api_Norbit.Controllers
                     {
                         db.User.Remove(user);
                         db.SaveChanges();
-                        return "Пользователь успешно удалён";
+                        return Ok("Пользователь удалён!");
                     }
                 }
             }
-            return problem;
+            return BadRequest("Проверьте введённый id!");
         }
     }
 }

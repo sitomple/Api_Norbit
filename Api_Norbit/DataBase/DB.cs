@@ -11,6 +11,8 @@ namespace Api_Norbit.DataBase
         public DbSet<UserModel> User { get; set; }
         public DbSet<User_markModel> User_mark { get; set; }
         public DbSet<SubjectModel> Subject { get; set; }
+        public DbSet<RoleModel> Role { get; set; }
+        public DbSet<ClassModel> Grade { get; set; } 
         public DB()
         {
             Database.EnsureCreated();
