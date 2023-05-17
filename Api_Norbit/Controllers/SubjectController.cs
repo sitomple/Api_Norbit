@@ -25,10 +25,10 @@ namespace Api_Norbit.Controllers
         }
 
         /// <summary>
-        /// Проверяет существует ли уже предмет который хотят добавить.
+        /// Проверяет существует ли уже предмет, который хотят добавить.
         /// </summary>
         /// <param name="nameSubject">Название предмета</param>
-        /// <returns>Булевое значение: True - пройдено проверку на число, false - проверка на число не пройдена.</returns>
+        /// <returns>Булевое значение: True - пройдена проверка на повторения, false - проверка на повторения не пройдена.</returns>
         private bool checkSubjectName(string nameSubject)
         {
             using (DB db = new DB())

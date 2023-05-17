@@ -24,7 +24,6 @@ namespace Api_Norbit.Controllers
         [HttpGet(Name = "GetAllUser")]
         public List<UserModel> GetAllUser()
         {
-            string infoUsers = "";
             using (DB db = new DB())
             {
                 var users = db.User.OrderByDescending(x => x.grade).ToList();
