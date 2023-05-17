@@ -29,7 +29,7 @@ namespace Api_Norbit.Controllers
         /// </summary>
         /// <param name="nameSubject">Название предмета</param>
         /// <returns>Булевое значение: True - пройдена проверка на повторения, false - проверка на повторения не пройдена.</returns>
-        private bool checkSubjectName(string nameSubject)
+        private bool CheckSubjectName(string nameSubject)
         {
             using (DB db = new DB())
             {
@@ -50,7 +50,7 @@ namespace Api_Norbit.Controllers
         [HttpPost(Name = "AddSubject")]
         public ActionResult AddNewSubject(string nameSubject)
         {
-            if (checkSubjectName(nameSubject))
+            if (CheckSubjectName(nameSubject))
             {
                 int id = 1;
                 using (DB db = new DB())
